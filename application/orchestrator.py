@@ -75,7 +75,6 @@ class QAOrchestrator:
         self.temperature = temperature
         self.save_to_unit_dir = save_to_unit_dir
         self.unit_base_paths = unit_base_paths or []
-
         self.response_parser = ResponseParser()
         self.validator = ResultValidator()
 
@@ -127,7 +126,9 @@ class QAOrchestrator:
             )
 
             # Parse response
-            extraction_result, raw_json = self.response_parser.parse(llm_response.content)
+            # Извлекаем исходный номер госзакупки из контекста (если есть)
+            source_number = context.metadata.get("purchase_notice_number")
+            extraction_result, raw_json = self.response_parser.parse(llm_response.content, source_number=source_number)
             extraction_result.raw_llm_response = llm_response.content
 
             # Set document info

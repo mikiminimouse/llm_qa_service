@@ -41,6 +41,9 @@ class Settings(BaseSettings):
     BATCH_SIZE: int = 10
     SKIP_PROCESSED: bool = True
 
+    # INN Enrichment
+    ENABLE_INN_ENRICHMENT: bool = True
+
     # Prompts
     PROMPTS_DIR: str = "prompts"
 

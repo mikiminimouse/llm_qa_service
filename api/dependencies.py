@@ -2,7 +2,6 @@
 
 import logging
 from functools import lru_cache
-from typing import AsyncGenerator
 
 from application.orchestrator import QAOrchestrator
 from config import Settings, get_settings
@@ -53,7 +52,7 @@ async def init_services(settings: Settings) -> None:
     # Create prompt manager
     prompt_manager = PromptManager(prompts_dir=settings.PROMPTS_DIR)
 
-    # Create orchestrator
+    # Create orchestrator (simplified, without post-processor)
     _orchestrator = QAOrchestrator(
         llm_client=llm_client,
         context_loader=_context_loader,

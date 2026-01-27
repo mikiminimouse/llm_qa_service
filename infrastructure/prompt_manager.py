@@ -54,7 +54,7 @@ class PromptManager:
         self._cache[relative_path] = content
         return content
 
-    def get_system_prompt(self, name: str = "winner_extractor_v2") -> str:
+    def get_system_prompt(self, name: str = "winner_extractor_v4") -> str:
         """
         Get system prompt by name.
 
@@ -66,7 +66,7 @@ class PromptManager:
         """
         return self._load_file(f"system/{name}.txt")
 
-    def get_user_prompt_template(self, name: str = "extract_winner_v2") -> str:
+    def get_user_prompt_template(self, name: str = "extract_winner_v4") -> str:
         """
         Get user prompt template by name.
 
@@ -80,7 +80,7 @@ class PromptManager:
 
     def format_user_prompt(
         self,
-        template_name: str = "extract_winner_v2",
+        template_name: str = "extract_winner_v4",
         document_content: str = "",
         **kwargs,
     ) -> str:

@@ -10,6 +10,57 @@ from domain.interfaces.context_loader import DocumentContext, IContextLoader
 logger = logging.getLogger(__name__)
 
 
+def _extract_text_from_tables(tables: list) -> str:
+    """
+    Extract text content from DoclingDocument tables.
+
+    Args:
+        tables: List of table objects from DoclingDocument.
+
+    Returns:
+        Formatted text representation of tables.
+    """
+    if not tables:
+        return ""
+
+    table_texts = []
+    for table_idx, table in enumerate(tables):
+        cells = table.get("data", {}).get("table_cells", [])
+        if not cells:
+            continue
+
+        # Get table dimensions
+        num_rows = table.get("data", {}).get("num_rows", 0)
+        num_cols = table.get("data", {}).get("num_cols", 0)
+
+        if num_rows == 0 or num_cols == 0:
+            continue
+
+        # Build table as text grid
+        rows = []
+        for row_idx in range(num_rows):
+            row_cells = []
+            for col_idx in range(num_cols):
+                # Find cell at this position
+                cell_text = ""
+                for cell in cells:
+                    if (cell.get("start_row_offset_idx") == row_idx and
+                        cell.get("end_row_offset_idx") == row_idx + 1 and
+                        cell.get("start_col_offset_idx") == col_idx):
+                        cell_text = cell.get("text", "").strip()
+                        break
+                row_cells.append(cell_text)
+            if any(cell for cell in row_cells):  # Only add non-empty rows
+                rows.append(" | ".join(row_cells))
+
+        if rows:
+            table_texts.append(f"--- Таблица {table_idx + 1} ---")
+            table_texts.extend(rows)
+            table_texts.append("")  # Empty line after table
+
+    return "\n".join(table_texts)
+
+
 class MongoContextLoader(IContextLoader):
     """
     Context loader from MongoDB.
@@ -76,9 +127,41 @@ class MongoContextLoader(IContextLoader):
                     text_value = t.get("orig") or t.get("text", "")
                     if text_value:
                         content_parts.append(text_value.strip())
+
+                # Add tables content (critical for INN extraction!)
+                tables = docling_doc.get("tables", [])
+                tables_text = _extract_text_from_tables(tables)
+                if tables_text:
+                    content_parts.append("\n\n=== ТАБЛИЦЫ ИЗ ДОКУМЕНТА ===\n")
+                    content_parts.append(tables_text)
+
                 content = "\n\n".join(content_parts)
-                content_type = "docling_texts"
-                logger.info(f"Generated content from docling_document.texts for {unit_id}: {len(content)} chars")
+                content_type = "docling_texts+tables"
+                logger.info(f"Generated content from docling_document.texts+tables for {unit_id}: {len(content)} chars")
+
+        # Fallback: check nested content field (for newly loaded datasets)
+        if not content:
+            nested_content = doc.get("content", {})
+            if isinstance(nested_content, dict):
+                # Direct texts array in content (DoclingDocument format)
+                texts = nested_content.get("texts", [])
+                if texts:
+                    content_parts = []
+                    for t in texts:
+                        text_value = t.get("orig") or t.get("text", "")
+                        if text_value:
+                            content_parts.append(text_value.strip())
+
+                    # Add tables content (critical for INN extraction!)
+                    tables = nested_content.get("tables", [])
+                    tables_text = _extract_text_from_tables(tables)
+                    if tables_text:
+                        content_parts.append("\n\n=== ТАБЛИЦЫ ИЗ ДОКУМЕНТА ===\n")
+                        content_parts.append(tables_text)
+
+                    content = "\n\n".join(content_parts)
+                    content_type = "content.texts+tables"
+                    logger.info(f"Generated content from content.texts+tables for {unit_id}: {len(content)} chars")
 
         if not content:
             logger.warning(f"No content found for unit_id: {unit_id}")
@@ -109,6 +192,9 @@ class MongoContextLoader(IContextLoader):
             metadata["document_type"] = doc["document_type"]
         if doc.get("processed_at"):
             metadata["processed_at"] = str(doc["processed_at"])
+        # Исходный номер госзакупки (purchaseNoticeNumber) из protocols223
+        if doc.get("purchase_notice_number"):
+            metadata["purchase_notice_number"] = doc["purchase_notice_number"]
 
         return DocumentContext(
             unit_id=unit_id,

@@ -26,7 +26,11 @@ class ProcurementInfo(BaseModel):
 
     purchase_number: Optional[str] = Field(
         None,
-        description="Номер закупки (реестровый номер)",
+        description="Номер закупки (реестровый номер) - УСТАРЕЛО, используйте purchase_notice_number",
+    )
+    purchase_notice_number: Optional[str] = Field(
+        None,
+        description="Номер госзакупки (purchaseNoticeNumber) - 11 цифр для 223-ФЗ",
     )
     purchase_name: Optional[str] = Field(
         None,
