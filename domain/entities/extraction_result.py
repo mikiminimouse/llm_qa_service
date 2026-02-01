@@ -4,7 +4,14 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field, model_validator
 
-from .extraction_components import CustomerInfo, DocumentInfo, ExtractionFlags, ProcurementInfo
+from .extraction_components import (
+    CustomerInfo,
+    DocumentInfo,
+    ExtractionFlags,
+    HistoryEvent,
+    ProcurementInfo,
+    TraceInfo,
+)
 from .winner import OtherParticipant, WinnerInfo
 
 
@@ -49,6 +56,16 @@ class WinnerExtractionResultV2(BaseModel):
     document: DocumentInfo = Field(
         default_factory=DocumentInfo,
         description="Информация о документе",
+    )
+
+    # Traceability fields
+    trace: Optional[TraceInfo] = Field(
+        None,
+        description="Информация о трейсинге обработки",
+    )
+    history: List[HistoryEvent] = Field(
+        default_factory=list,
+        description="История обработки документа",
     )
 
     # LLM metadata

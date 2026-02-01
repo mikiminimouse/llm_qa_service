@@ -61,7 +61,7 @@ app.include_router(router)
 async def root():
     """Root endpoint with service info."""
     return {
-        "service": "llm_qa_service",
+        "service": "llm_qaenrich",
         "version": "1.0.0",
         "description": "Winner extraction from procurement protocols",
         "docs": "/docs",

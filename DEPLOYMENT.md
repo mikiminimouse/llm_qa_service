@@ -234,9 +234,9 @@ After=network.target mongod.service
 [Service]
 Type=simple
 User=pak
-WorkingDirectory=/home/pak/llm_qa_service
-Environment=PATH=/home/pak/llm_qa_service/venv/bin
-ExecStart=/home/pak/llm_qa_service/venv/bin/python main.py
+WorkingDirectory=/home/pak/projects/LLM_qaenrich
+Environment=PATH=/home/pak/projects/LLM_qaenrich/venv/bin
+ExecStart=/home/pak/projects/LLM_qaenrich/venv/bin/python main.py
 Restart=always
 RestartSec=10
 

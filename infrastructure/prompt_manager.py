@@ -54,33 +54,37 @@ class PromptManager:
         self._cache[relative_path] = content
         return content
 
-    def get_system_prompt(self, name: str = "winner_extractor_v2") -> str:
+    def get_system_prompt(self, name: str = None) -> str:
         """
         Get system prompt by name.
 
         Args:
-            name: Prompt name (without extension).
+            name: Prompt name (without extension). If None, uses winner_extractor_v4.
 
         Returns:
             System prompt content.
         """
+        if name is None:
+            name = "winner_extractor_v4"
         return self._load_file(f"system/{name}.txt")
 
-    def get_user_prompt_template(self, name: str = "extract_winner_v2") -> str:
+    def get_user_prompt_template(self, name: str = None) -> str:
         """
         Get user prompt template by name.
 
         Args:
-            name: Template name (without extension).
+            name: Template name (without extension). If None, uses extract_winner_v4.
 
         Returns:
             User prompt template content.
         """
+        if name is None:
+            name = "extract_winner_v4"
         return self._load_file(f"user/{name}.txt")
 
     def format_user_prompt(
         self,
-        template_name: str = "extract_winner_v2",
+        template_name: str = None,
         document_content: str = "",
         **kwargs,
     ) -> str:
@@ -88,7 +92,7 @@ class PromptManager:
         Format user prompt with document content.
 
         Args:
-            template_name: Template name (without extension).
+            template_name: Template name (without extension). If None, uses extract_winner_v4.
             document_content: Document content to insert.
             **kwargs: Additional template variables.
 

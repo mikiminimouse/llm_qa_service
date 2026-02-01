@@ -5,7 +5,12 @@ import logging
 import time
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import List, Optional
+
+# Директория для сохранения "плохих" ответов LLM
+BAD_RESPONSES_DIR = Path("/home/pak/llm_qa_service/bad_responses")
+BAD_RESPONSES_DIR.mkdir(parents=True, exist_ok=True)
 
 from domain.entities import QARecord, WinnerExtractionResultV2
 from domain.entities.extraction_components import DocumentInfo, ExtractionFlags, ProcurementInfo
@@ -16,6 +21,9 @@ from infrastructure.prompt_manager import PromptManager
 
 from .response_parser import ResponseParseError, ResponseParser
 from .validators.result_validator import ResultValidator
+
+# Traceability
+from domain.entities.extraction_components import HistoryEvent, TraceInfo
 
 logger = logging.getLogger(__name__)
 
@@ -75,7 +83,6 @@ class QAOrchestrator:
         self.temperature = temperature
         self.save_to_unit_dir = save_to_unit_dir
         self.unit_base_paths = unit_base_paths or []
-
         self.response_parser = ResponseParser()
         self.validator = ResultValidator()
 
@@ -90,6 +97,11 @@ class QAOrchestrator:
             ProcessingResult with success status and record.
         """
         start_time = time.time()
+        processing_start = datetime.utcnow()
+
+        # Переменные для хранения контекста при ошибках
+        context = None
+        llm_response = None
 
         # Check if already processed
         if self.skip_processed:
@@ -112,6 +124,11 @@ class QAOrchestrator:
                     error=f"Document not found: {unit_id}",
                 )
 
+            # Traceability: извлекаем метаданные
+            registration_number = context.metadata.get("registration_number")
+            existing_trace = context.metadata.get("trace", {})
+            existing_history = context.metadata.get("history", [])
+
             # Load prompts
             system_prompt = self.prompt_manager.get_system_prompt()
             user_prompt = self.prompt_manager.format_user_prompt(
@@ -127,8 +144,14 @@ class QAOrchestrator:
             )
 
             # Parse response
-            extraction_result, raw_json = self.response_parser.parse(llm_response.content)
+            # Извлекаем исходный номер госзакупки из контекста (если есть)
+            source_number = context.metadata.get("purchase_notice_number")
+            extraction_result, raw_json = self.response_parser.parse(llm_response.content, source_number=source_number)
             extraction_result.raw_llm_response = llm_response.content
+
+            # Traceability: добавляем registration_number в procurement
+            if registration_number:
+                extraction_result.procurement.registration_number = registration_number
 
             # Set document info
             extraction_result.document.source_file = context.source_file
@@ -143,10 +166,57 @@ class QAOrchestrator:
 
             # Calculate processing time
             processing_time_ms = int((time.time() - start_time) * 1000)
+            processing_end = datetime.utcnow()
+
+            # Traceability: создаем TraceInfo
+            trace_info = TraceInfo(
+                component="llm_qaenrich",
+                unit_id=unit_id,
+                processed_at=processing_end.isoformat() + "Z",
+                registration_number=registration_number,
+                model_used=self.llm_client.model_name,
+                processing_time_ms=processing_time_ms,
+            )
+            extraction_result.trace = trace_info
+
+            # Traceability: создаем события истории
+            history_events = [
+                HistoryEvent(
+                    component="llm_qaenrich",
+                    action="loaded",
+                    timestamp=processing_start.isoformat() + "Z",
+                    registration_number=registration_number,
+                    details={
+                        "source_file": context.source_file,
+                        "content_length": len(context.content),
+                        "content_type": context.content_type,
+                    },
+                ),
+                HistoryEvent(
+                    component="llm_qaenrich",
+                    action="processed",
+                    timestamp=processing_end.isoformat() + "Z",
+                    registration_number=registration_number,
+                    details={
+                        "winner_found": extraction_result.winner_found,
+                        "model_used": self.llm_client.model_name,
+                        "processing_time_ms": processing_time_ms,
+                    },
+                ),
+            ]
+
+            # Объединяем существующую историю с новой
+            extraction_result.history = existing_history + history_events
 
             # Create QA record
             record = QARecord(
                 unit_id=unit_id,
+                # ★ ЕДИНАЯ СИСТЕМА ТРЕЙСИНГА: PRIMARY TRACE ID и связанные поля
+                registration_number=registration_number,
+                purchase_notice_number=context.metadata.get("purchase_notice_number"),
+                record_id=context.metadata.get("record_id"),
+                protocol_id=context.metadata.get("protocol_id"),  # Для обратной совместимости
+                protocol_guid=context.metadata.get("protocol_guid"),
                 source_file=context.source_file,
                 result=extraction_result,
                 model_used=self.llm_client.model_name,
@@ -166,7 +236,7 @@ class QAOrchestrator:
 
             logger.info(
                 f"Processed {unit_id}: winner_found={extraction_result.winner_found}, "
-                f"time={processing_time_ms}ms"
+                f"time={processing_time_ms}ms, reg_number={registration_number}"
             )
 
             return ProcessingResult(
@@ -180,8 +250,21 @@ class QAOrchestrator:
             error_msg = f"Parse error: {e}"
             logger.error(f"Failed to process {unit_id}: {error_msg}")
 
-            # Save error record
-            error_record = await self._create_error_record(unit_id, error_msg)
+            # Сохраняем "плохой" ответ для анализа
+            if llm_response and llm_response.content:
+                self._save_bad_response(unit_id, llm_response.content, str(e), context)
+
+            # Save error record with trace
+            processing_time_ms = int((time.time() - start_time) * 1000)
+            registration_number = context.metadata.get("registration_number") if context else None
+            error_record = await self._create_error_record(
+                unit_id, error_msg, llm_response,
+                registration_number=registration_number,
+                purchase_notice_number=context.metadata.get("purchase_notice_number") if context else None,
+                record_id=context.metadata.get("record_id") if context else None,
+                protocol_id=context.metadata.get("protocol_id") if context else None,
+                processing_time_ms=processing_time_ms,
+            )
             await self.repository.save(error_record)
 
             return ProcessingResult(
@@ -189,12 +272,16 @@ class QAOrchestrator:
                 success=False,
                 error=error_msg,
                 record=error_record,
-                processing_time_ms=int((time.time() - start_time) * 1000),
+                processing_time_ms=processing_time_ms,
             )
 
         except Exception as e:
             error_msg = f"Processing error: {e}"
             logger.error(f"Failed to process {unit_id}: {error_msg}")
+
+            # Сохраняем "плохой" ответ для анализа
+            if llm_response and llm_response.content:
+                self._save_bad_response(unit_id, llm_response.content, str(e), context)
 
             return ProcessingResult(
                 unit_id=unit_id,
@@ -202,6 +289,36 @@ class QAOrchestrator:
                 error=error_msg,
                 processing_time_ms=int((time.time() - start_time) * 1000),
             )
+
+    def _save_bad_response(
+        self,
+        unit_id: str,
+        llm_content: str,
+        error: str,
+        context=None
+    ) -> None:
+        """Сохранить "плохой" ответ LLM для анализа."""
+        try:
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            filename = f"{unit_id}_{timestamp}.txt"
+            filepath = BAD_RESPONSES_DIR / filename
+
+            with open(filepath, 'w', encoding='utf-8') as f:
+                f.write(f"Unit ID: {unit_id}\n")
+                f.write(f"Timestamp: {timestamp}\n")
+                f.write(f"Error: {error}\n")
+                f.write(f"Content Length: {len(context.content) if context else 'N/A'}\n")
+                f.write("=" * 70 + "\n\n")
+                f.write("LLM RESPONSE:\n")
+                f.write(llm_content)
+                f.write("\n\n" + "=" * 70 + "\n\n")
+                if context and context.content:
+                    preview = context.content[:2000]
+                    f.write(f"DOCUMENT PREVIEW (first 2000 chars):\n{preview}...")
+
+            logger.debug(f"Saved bad response to {filepath}")
+        except Exception as save_error:
+            logger.warning(f"Failed to save bad response for {unit_id}: {save_error}")
 
     async def process_batch(
         self,
@@ -373,18 +490,61 @@ class QAOrchestrator:
 
         return results
 
-    async def _create_error_record(self, unit_id: str, error: str) -> QARecord:
+    async def _create_error_record(
+        self,
+        unit_id: str,
+        error: str,
+        llm_response=None,
+        registration_number: Optional[str] = None,
+        purchase_notice_number: Optional[str] = None,
+        record_id: Optional[str] = None,
+        protocol_id: Optional[str] = None,
+        processing_time_ms: int = 0,
+    ) -> QARecord:
         """Create QA record for failed processing."""
+        processing_time = datetime.utcnow()
+
+        reasoning = f"Processing failed: {error}"
+        if llm_response and llm_response.content:
+            reasoning += f"\n\nRaw LLM response (first 500 chars):\n{llm_response.content[:500]}..."
+
+        # Traceability: создаем trace даже для ошибок
+        trace_info = TraceInfo(
+            component="llm_qaenrich",
+            unit_id=unit_id,
+            processed_at=processing_time.isoformat() + "Z",
+            registration_number=registration_number,
+            model_used=self.llm_client.model_name,
+            processing_time_ms=processing_time_ms,
+        )
+
+        history_event = HistoryEvent(
+            component="llm_qaenrich",
+            action="error",
+            timestamp=processing_time.isoformat() + "Z",
+            registration_number=registration_number,
+            details={"error": error},
+        )
+
+        result = WinnerExtractionResultV2(
+            winner_found=False,
+            winners=[],
+            procurement=ProcurementInfo(registration_number=registration_number),
+            flags=ExtractionFlags(insufficient_data=True),
+            document=DocumentInfo(),
+            reasoning=reasoning,
+            trace=trace_info,
+            history=[history_event],
+        )
+
         return QARecord(
             unit_id=unit_id,
-            result=WinnerExtractionResultV2(
-                winner_found=False,
-                winners=[],
-                procurement=ProcurementInfo(),
-                flags=ExtractionFlags(insufficient_data=True),
-                document=DocumentInfo(),
-                reasoning=f"Processing failed: {error}",
-            ),
+            # ★ ЕДИНАЯ СИСТЕМА ТРЕЙСИНГА: сохраняем поля трейсинга даже при ошибках
+            registration_number=registration_number,
+            purchase_notice_number=purchase_notice_number,
+            record_id=record_id,
+            protocol_id=protocol_id,
+            result=result,
             error=error,
             model_used=self.llm_client.model_name,
         )

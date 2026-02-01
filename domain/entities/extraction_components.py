@@ -24,9 +24,17 @@ class CustomerInfo(BaseModel):
 class ProcurementInfo(BaseModel):
     """Information about the procurement procedure."""
 
+    registration_number: Optional[str] = Field(
+        None,
+        description="Номер регистрации (registrationNumber) - PRIMARY TRACE ID из protocols",
+    )
     purchase_number: Optional[str] = Field(
         None,
-        description="Номер закупки (реестровый номер)",
+        description="Номер закупки (реестровый номер) - УСТАРЕЛО, используйте purchase_notice_number",
+    )
+    purchase_notice_number: Optional[str] = Field(
+        None,
+        description="Номер госзакупки (purchaseNoticeNumber) - 11 цифр для 223-ФЗ",
     )
     purchase_name: Optional[str] = Field(
         None,
@@ -121,4 +129,58 @@ class DocumentInfo(BaseModel):
     page_count: Optional[int] = Field(
         None,
         description="Количество страниц",
+    )
+
+
+class TraceInfo(BaseModel):
+    """Информация о трейсинге компонента для отслеживания обработки."""
+
+    component: str = Field(
+        ...,
+        description="Название компонента (например, 'llm_qaenrich')",
+    )
+    unit_id: str = Field(
+        ...,
+        description="Идентификатор UNIT",
+    )
+    processed_at: str = Field(
+        ...,
+        description="Время обработки в формате ISO 8601",
+    )
+    registration_number: Optional[str] = Field(
+        None,
+        description="Номер регистрации (PRIMARY TRACE ID из protocols)",
+    )
+    model_used: Optional[str] = Field(
+        None,
+        description="Использованная модель LLM",
+    )
+    processing_time_ms: Optional[int] = Field(
+        None,
+        description="Время обработки в миллисекундах",
+    )
+
+
+class HistoryEvent(BaseModel):
+    """Событие в истории обработки документа."""
+
+    component: str = Field(
+        ...,
+        description="Название компонента",
+    )
+    action: str = Field(
+        ...,
+        description="Действие (например, 'processed', 'validated', 'error')",
+    )
+    timestamp: str = Field(
+        ...,
+        description="Время события в формате ISO 8601",
+    )
+    registration_number: Optional[str] = Field(
+        None,
+        description="Номер регистрации (для связи)",
+    )
+    details: dict = Field(
+        default_factory=dict,
+        description="Дополнительные детали события",
     )

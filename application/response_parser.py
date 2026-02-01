@@ -31,14 +31,16 @@ class ResponseParser:
 
     # Patterns for JSON extraction
     JSON_BLOCK_PATTERN = re.compile(r"```(?:json)?\s*\n?(.*?)\n?```", re.DOTALL)
-    JSON_OBJECT_PATTERN = re.compile(r"\{.*\}", re.DOTALL)
+    # Improved pattern to find balanced JSON objects
+    JSON_OBJECT_PATTERN = re.compile(r"\{(?:[^{}]|(?:\{[^{}]*\}))*\}", re.DOTALL)
 
-    def parse(self, response: str) -> Tuple[WinnerExtractionResultV2, str]:
+    def parse(self, response: str, source_number: str = None) -> Tuple[WinnerExtractionResultV2, str]:
         """
         Parse LLM response to WinnerExtractionResultV2.
 
         Args:
             response: Raw LLM response text.
+            source_number: Исходный номер госзакупки (11 цифр) из protocols223.
 
         Returns:
             Tuple of (WinnerExtractionResultV2, raw_json_str).
@@ -59,37 +61,117 @@ class ResponseParser:
 
         # Transform to our model structure
         try:
-            result = self._transform_to_result(data)
+            result = self._transform_to_result(data, source_number=source_number)
             return result, json_str
         except ValidationError as e:
             raise ResponseParseError(f"Validation error: {e}")
 
     def _extract_json(self, text: str) -> Optional[str]:
         """
-        Extract JSON from response text.
+        Extract JSON from response text with robust fallback logic.
 
         Tries multiple strategies:
         1. Look for ```json blocks
-        2. Look for raw JSON object
+        2. Look for raw JSON object (balanced braces)
+        3. Try to fix common JSON issues and retry
         """
         # Try markdown code block first
         match = self.JSON_BLOCK_PATTERN.search(text)
         if match:
-            return match.group(1).strip()
+            json_str = match.group(1).strip()
+            if self._is_valid_json(json_str):
+                return json_str
 
-        # Try raw JSON object
+        # Try raw JSON object with balanced braces
         match = self.JSON_OBJECT_PATTERN.search(text)
         if match:
-            return match.group(0).strip()
+            json_str = match.group(0).strip()
+            if self._is_valid_json(json_str):
+                return json_str
+
+        # Try to find the largest valid JSON substring
+        logger.debug("Standard extraction failed, trying fallback methods")
+        return self._extract_json_fallback(text)
+
+    def _is_valid_json(self, text: str) -> bool:
+        """Check if text is valid JSON."""
+        try:
+            json.loads(text)
+            return True
+        except (json.JSONDecodeError, ValueError):
+            return False
+
+    def _extract_json_fallback(self, text: str) -> Optional[str]:
+        """
+        Fallback JSON extraction with common fixes.
+
+        Tries to fix common JSON issues:
+        - Trailing commas
+        - Missing quotes around keys
+        - Single quotes instead of double quotes
+        """
+        # Try to find JSON-like patterns
+        candidates = []
+
+        # Look for content between first { and last }
+        first_brace = text.find("{")
+        last_brace = text.rfind("}")
+        if first_brace != -1 and last_brace > first_brace:
+            candidates.append(text[first_brace:last_brace + 1])
+
+        # Look for content between ``` and ```
+        for match in re.finditer(r"```(?:json)?\s*\n?(.*?)\n?```", text, re.DOTALL):
+            candidates.append(match.group(1).strip())
+
+        # Try to fix each candidate
+        for candidate in candidates:
+            # Try as-is first
+            if self._is_valid_json(candidate):
+                return candidate
+
+            # Try common fixes
+            fixed = self._fix_json(candidate)
+            if fixed and self._is_valid_json(fixed):
+                logger.debug("Fixed broken JSON with common patches")
+                return fixed
 
         return None
 
-    def _transform_to_result(self, data: dict) -> WinnerExtractionResultV2:
+    def _fix_json(self, text: str) -> Optional[str]:
+        """
+        Attempt to fix common JSON issues.
+
+        Fixes:
+        - Trailing commas in arrays/objects
+        - Single quotes to double quotes
+        - Unquoted keys
+        """
+        if not text:
+            return None
+
+        fixed = text
+
+        # Remove trailing commas before } or ]
+        fixed = re.sub(r",(\s*[}\]])", r"\1", fixed)
+
+        # Fix single quotes to double quotes (simple case)
+        # This is a basic fix - more complex cases may require json5
+        fixed = fixed.replace("'", '"')
+
+        # Try to fix unquoted keys (basic pattern)
+        # This is conservative - only fixes obvious cases
+        fixed = re.sub(r"(\{)\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:", r'\1"\2":', fixed)
+        fixed = re.sub(r",\s*([a-zA-Z_][a-zA-Z0-9_]*)\s*:", r', "\1":', fixed)
+
+        return fixed.strip() if fixed != text else None
+
+    def _transform_to_result(self, data: dict, source_number: str = None) -> WinnerExtractionResultV2:
         """
         Transform LLM JSON output to WinnerExtractionResultV2.
 
         Args:
             data: Parsed JSON dictionary.
+            source_number: Исходный номер госзакупки (11 цифр) из protocols223.
 
         Returns:
             WinnerExtractionResultV2 model.
@@ -123,8 +205,10 @@ class ResponseParser:
 
         # Extract procurement info
         procurement_data = data.get("procurement_info", {})
+        raw_number = procurement_data.get("number")
         procurement = ProcurementInfo(
-            purchase_number=procurement_data.get("number"),
+            purchase_number=raw_number,  # Сырой номер от LLM (для обратной совместимости)
+            purchase_notice_number=self._normalize_purchase_number(raw_number, source_number),  # Используем только исходный номер
             purchase_name=procurement_data.get("name"),
             initial_price=self._parse_price(procurement_data.get("initial_price")),
             final_price=self._parse_price(procurement_data.get("final_price")),
@@ -187,8 +271,40 @@ class ResponseParser:
                     return None
         return None
 
+    def _normalize_purchase_number(self, raw_number: str, source_number: str = None) -> Optional[str]:
+        """
+        Нормализовать номер закупки к формату purchaseNoticeNumber (223-ФЗ).
+
+        ПРИОРИТЕТ:
+        1. source_number (из protocols223) — только если 11 цифр
+        2. None — если нет валидного исходного номера
+
+        НЕ извлекать номер из текста документа (raw_number)!
+
+        Args:
+            raw_number: Сырой номер закупки из LLM ответа (ИГНОРИРУЕТСЯ)
+            source_number: Исходный номер госзакупки из protocols223
+
+        Returns:
+            Нормализованный номер (строка из 11 цифр) или None
+        """
+        # Используем только исходный номер из protocols223
+        if source_number:
+            source_str = str(source_number).strip()
+            # Проверяем: ровно 11 цифр (формат 223-ФЗ)
+            if re.match(r"^\d{11}$", source_str):
+                return source_str
+            # Если исходный номер не 11 цифр — не используем
+            logger.debug(f"Source number is not 11 digits: {source_str}")
+
+        # НЕ извлекаем номер из текста документа
+        # raw_number игнорируется, чтобы избежать ошибок (внутренние номера, номера протоколов)
+        return None
+
     def _parse_participant_status(self, status: str) -> ParticipantStatus:
         """Parse participant status string to enum."""
+        if not status:
+            return ParticipantStatus.NOT_FOUND
         status_map = {
             "winner": ParticipantStatus.WINNER,
             "single_participant": ParticipantStatus.SINGLE_PARTICIPANT,
@@ -200,6 +316,8 @@ class ResponseParser:
 
     def _parse_procurement_status(self, status: str) -> ProcurementStatus:
         """Parse procurement status string to enum."""
+        if not status:
+            return ProcurementStatus.UNKNOWN
         status_map = {
             "completed": ProcurementStatus.COMPLETED,
             "not_held": ProcurementStatus.NOT_HELD,
@@ -221,6 +339,8 @@ class ResponseParser:
 
     def _parse_document_type(self, doc_type: str) -> DocumentType:
         """Parse document type string to enum."""
+        if not doc_type:
+            return DocumentType.UNKNOWN
         type_map = {
             "итоговый_протокол": DocumentType.FINAL_PROTOCOL,
             "протокол_рассмотрения": DocumentType.CONSIDERATION_PROTOCOL,

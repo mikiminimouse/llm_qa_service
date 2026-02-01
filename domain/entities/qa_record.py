@@ -14,16 +14,44 @@ class QARecord(BaseModel):
     # Primary identifier (unit_id from docling_results)
     unit_id: str = Field(..., description="Unique identifier from docling_results")
 
+    # ★ PRIMARY TRACE ID: registrationNumber для сквозного трейсинга
+    registration_number: Optional[str] = Field(
+        None,
+        description="Registration number from protocols collection (PRIMARY TRACE ID)",
+    )
+    purchase_notice_number: Optional[str] = Field(
+        None,
+        description="Purchase notice number from protocols collection",
+    )
+    record_id: Optional[str] = Field(
+        None,
+        description="MongoDB ObjectId from protocols collection",
+    )
+
     # Optional protocol_id for backwards compatibility
     protocol_id: Optional[str] = Field(
         None,
-        description="Protocol ID if available",
+        description="Protocol ID if available (deprecated, use record_id)",
     )
 
     # Source information
     source_file: Optional[str] = Field(
         None,
         description="Original source filename",
+    )
+
+    # Traceability fields
+    protocol_guid: Optional[str] = Field(
+        None,
+        description="GUID протокола из protocols",
+    )
+    trace: Optional[dict] = Field(
+        None,
+        description="Трейсинг информации по компонентам",
+    )
+    history: list[dict] = Field(
+        default_factory=list,
+        description="История обработки",
     )
 
     # Extraction result
@@ -79,9 +107,21 @@ class QARecord(BaseModel):
             self.winner_name = primary_winner.name
             self.winner_inn = primary_winner.inn
 
+        # Sync trace fields from result
+        if self.result.trace:
+            self.trace = self.result.trace.model_dump(mode="json")
+
+        # Sync history from result
+        if self.result.history:
+            self.history = [h.model_dump(mode="json") for h in self.result.history]
+
+        # Sync registration_number from procurement
+        if not self.registration_number and self.result.procurement.registration_number:
+            self.registration_number = self.result.procurement.registration_number
+
     def to_mongo_dict(self) -> dict:
         """Convert to dictionary for MongoDB storage."""
-        data = self.model_dump(mode="json")
+        data = self.model_dump(mode="json", exclude_none=True)
         # Use unit_id as the primary key
         data["_id"] = self.unit_id
         return data

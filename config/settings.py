@@ -26,9 +26,9 @@ class Settings(BaseSettings):
     GLM_API_KEY: str = ""
     GLM_BASE_URL: str = "https://api.z.ai/api/coding/paas/v4"
     GLM_MODEL: str = "GLM-4.7"
-    GLM_TIMEOUT: float = 60.0
-    GLM_MAX_RETRIES: int = 3
-    GLM_RETRY_DELAY: float = 1.0
+    GLM_TIMEOUT: float = 45.0  # Уменьшено: 60 → 45 сек
+    GLM_MAX_RETRIES: int = 2    # Уменьшено: 3 → 2
+    GLM_RETRY_DELAY: float = 0.5  # Уменьшено: 1.0 → 0.5 сек
     GLM_MAX_TOKENS: int = 4096
     GLM_TEMPERATURE: float = 0.1
 
@@ -41,8 +41,12 @@ class Settings(BaseSettings):
     BATCH_SIZE: int = 10
     SKIP_PROCESSED: bool = True
 
+    # INN Enrichment
+    ENABLE_INN_ENRICHMENT: bool = True
+
     # Prompts
     PROMPTS_DIR: str = "prompts"
+    PROMPT_VERSION: str = "v4"  # v4 or v5 (v5 has improved INN extraction but needs more testing)
 
     # UNIT directories for saving qa_results.json
     UNIT_BASE_PATHS: list[str] = [

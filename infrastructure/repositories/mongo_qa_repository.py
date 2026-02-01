@@ -53,12 +53,16 @@ class MongoQARepository(IQARepository):
             IndexModel([("is_service_file", ASCENDING)]),
             IndexModel([("processed_at", ASCENDING)]),
             IndexModel([("winner_inn", ASCENDING)]),
+            # Traceability indexes
+            IndexModel([("registration_number", ASCENDING)]),
+            IndexModel([("trace.component", ASCENDING)]),
+            IndexModel([("history.timestamp", ASCENDING)]),
         ]
 
         try:
             await self.collection.create_indexes(indexes)
             self._indexes_created = True
-            logger.info("QA repository indexes created")
+            logger.info("QA repository indexes created (including traceability indexes)")
         except Exception as e:
             logger.warning(f"Failed to create indexes: {e}")
 

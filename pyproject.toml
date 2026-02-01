@@ -1,5 +1,5 @@
 [project]
-name = "llm_qa_service"
+name = "llm_qaenrich"
 version = "1.0.0"
 description = "Service for extracting winner information from procurement protocols using LLM"
 requires-python = ">=3.11"

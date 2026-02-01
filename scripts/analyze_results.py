@@ -11,7 +11,7 @@ from datetime import datetime
 from typing import Optional
 
 # Add parent directory to path for imports
-sys.path.insert(0, "/root/winners_preprocessor/final_preprocessing/llm_qa_service")
+sys.path.insert(0, "/home/pak/projects/LLM_qaenrich")
 
 from motor.motor_asyncio import AsyncIOMotorClient
 from config import get_settings
