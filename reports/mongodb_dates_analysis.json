@@ -1,0 +1,50 @@
+{
+  "generated_at": "2026-02-01T20:10:40.817014",
+  "collections": [
+    {
+      "collection": "docling_results",
+      "total": 782,
+      "by_day": {
+        "2026-01-29": 782
+      },
+      "by_week": {
+        "2026-W05": 782
+      },
+      "by_month": {
+        "2026-01": 782
+      },
+      "date_field": "created_at",
+      "min_date": "2026-01-29T05:14:23.685000",
+      "max_date": "2026-01-29T05:14:23.685000"
+    },
+    {
+      "collection": "qa_results",
+      "total": 0,
+      "by_day": {},
+      "by_week": {},
+      "by_month": {},
+      "date_field": null
+    },
+    {
+      "collection": "protocols",
+      "total": 3205,
+      "by_day": {
+        "2026-01-22": 1703,
+        "2026-01-27": 1502
+      },
+      "by_week": {
+        "2026-W04": 3205
+      },
+      "by_month": {
+        "2026-01": 3205
+      },
+      "date_field": "loadDate",
+      "min_date": "2026-01-22T04:21:39.742000",
+      "max_date": "2026-01-22T04:21:39.742000"
+    }
+  ],
+  "summary": {
+    "total_collections": 3,
+    "total_records": 3987
+  }
+}

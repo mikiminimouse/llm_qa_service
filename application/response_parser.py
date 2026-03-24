@@ -1,4 +1,10 @@
-"""Parser for LLM responses to extract structured data."""
+"""Parser for LLM responses to extract structured data.
+
+NOTE: Terminology updated for delivery processing system:
+- "winner" → "supplier" (поставщик)
+- "protocol" → "delivery document" (документ о поставке)
+- "purchaseProtocol" → "week_docs"
+"""
 
 import json
 import logging
@@ -10,7 +16,10 @@ from pydantic import ValidationError
 from domain.entities import WinnerExtractionResultV2
 from domain.entities.enums import DocumentType, NotHeldReason, ParticipantStatus, ProcurementStatus
 from domain.entities.extraction_components import CustomerInfo, DocumentInfo, ExtractionFlags, ProcurementInfo
-from domain.entities.winner import OtherParticipant, WinnerInfo
+from domain.entities.supplier import OtherParticipant, SupplierInfo
+
+# Legacy alias for backward compatibility
+WinnerInfo = SupplierInfo
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +49,7 @@ class ResponseParser:
 
         Args:
             response: Raw LLM response text.
-            source_number: Исходный номер госзакупки (11 цифр) из protocols223.
+            source_number: Исходный номер госзакупки (11 цифр) из contracts.week_docs.
 
         Returns:
             Tuple of (WinnerExtractionResultV2, raw_json_str).
@@ -171,25 +180,26 @@ class ResponseParser:
 
         Args:
             data: Parsed JSON dictionary.
-            source_number: Исходный номер госзакупки (11 цифр) из protocols223.
+            source_number: Исходный номер госзакупки (11 цифр) из contracts.week_docs.
 
         Returns:
             WinnerExtractionResultV2 model.
         """
-        # Extract winners
-        winners = []
+        # Extract suppliers (previously "winners")
+        suppliers = []
         for w in data.get("winners", []):
-            winner = WinnerInfo(
+            supplier = SupplierInfo(
                 name=w.get("name", "Unknown"),
                 inn=w.get("inn"),
                 kpp=w.get("kpp"),
                 ogrn=w.get("ogrn"),
                 address=w.get("address"),
                 contract_price=self._parse_price(w.get("contract_price")),
+                delivery_amount=self._parse_price(w.get("delivery_amount") or w.get("contract_price")),
                 status=self._parse_participant_status(w.get("status", "winner")),
                 confidence=w.get("confidence", 1.0),
             )
-            winners.append(winner)
+            suppliers.append(supplier)
 
         # Extract other participants
         other_participants = []
@@ -244,7 +254,7 @@ class ResponseParser:
 
         return WinnerExtractionResultV2(
             winner_found=data.get("winner_found", False),
-            winners=winners,
+            suppliers=suppliers,  # New field name (uses winners property for compatibility)
             other_participants=other_participants,
             procurement=procurement,
             customer=customer,
@@ -276,19 +286,19 @@ class ResponseParser:
         Нормализовать номер закупки к формату purchaseNoticeNumber (223-ФЗ).
 
         ПРИОРИТЕТ:
-        1. source_number (из protocols223) — только если 11 цифр
+        1. source_number (из contracts.week_docs) — только если 11 цифр
         2. None — если нет валидного исходного номера
 
         НЕ извлекать номер из текста документа (raw_number)!
 
         Args:
             raw_number: Сырой номер закупки из LLM ответа (ИГНОРИРУЕТСЯ)
-            source_number: Исходный номер госзакупки из protocols223
+            source_number: Исходный номер госзакупки из contracts.week_docs
 
         Returns:
             Нормализованный номер (строка из 11 цифр) или None
         """
-        # Используем только исходный номер из protocols223
+        # Используем только исходный номер из contracts.week_docs
         if source_number:
             source_str = str(source_number).strip()
             # Проверяем: ровно 11 цифр (формат 223-ФЗ)
@@ -298,7 +308,7 @@ class ResponseParser:
             logger.debug(f"Source number is not 11 digits: {source_str}")
 
         # НЕ извлекаем номер из текста документа
-        # raw_number игнорируется, чтобы избежать ошибок (внутренние номера, номера протоколов)
+        # raw_number игнорируется, чтобы избежать ошибок (внутренние номера, номера документов)
         return None
 
     def _parse_participant_status(self, status: str) -> ParticipantStatus:
@@ -338,15 +348,24 @@ class ResponseParser:
         return reason_map.get(reason.lower())
 
     def _parse_document_type(self, doc_type: str) -> DocumentType:
-        """Parse document type string to enum."""
+        """
+        Parse document type string to enum.
+
+        NOTE: Legacy protocol types are mapped to delivery document types.
+        """
         if not doc_type:
             return DocumentType.UNKNOWN
         type_map = {
+            # Legacy types (protocol based)
             "итоговый_протокол": DocumentType.FINAL_PROTOCOL,
             "протокол_рассмотрения": DocumentType.CONSIDERATION_PROTOCOL,
             "протокол_подведения_итогов": DocumentType.RESULT_PROTOCOL,
             "протокол_аукциона": DocumentType.AUCTION_PROTOCOL,
             "протокол_запроса_цен": DocumentType.FINAL_PROTOCOL,  # Map to final
+            # New types (delivery document based)
+            "документ_о_поставке": DocumentType.OTHER,
+            "акт_выполнения": DocumentType.OTHER,
+            # Other types
             "техзадание": DocumentType.OTHER,
             "расчет_баллов": DocumentType.OTHER,
             "иное": DocumentType.OTHER,

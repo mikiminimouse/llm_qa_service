@@ -1,4 +1,9 @@
-"""Main extraction result model."""
+"""Main extraction result model.
+
+NOTE: terminology updated for delivery processing system:
+- "winner" → "supplier" (поставщик)
+- "protocol" → "delivery document" (документ о поставке)
+"""
 
 from typing import List, Optional
 
@@ -12,21 +17,44 @@ from .extraction_components import (
     ProcurementInfo,
     TraceInfo,
 )
-from .winner import OtherParticipant, WinnerInfo
+from .supplier import OtherParticipant, SupplierInfo
+
+# Legacy alias for backward compatibility
+WinnerInfo = SupplierInfo
 
 
 class WinnerExtractionResultV2(BaseModel):
-    """Complete result of winner extraction from a protocol."""
+    """
+    Complete result of supplier extraction from a delivery document.
+
+    LEGACY NAME: Kept for backward compatibility.
+    New code should use DeliveryExtractionResult when created.
+
+    Terminology:
+    - "winner" → "supplier" (поставщик)
+    - "protocol" → "delivery document" (документ о поставке)
+    """
 
     # Main result
     winner_found: bool = Field(
         ...,
-        description="Победитель найден в документе",
+        description="Поставщик найден в документе (legacy поле, использует supplier_found)",
     )
-    winners: List[WinnerInfo] = Field(
+    suppliers: List[SupplierInfo] = Field(
         default_factory=list,
-        description="Список победителей (может быть >1 для многолотовых)",
+        description="Список поставщиков (может быть >1 для многолотовых)",
     )
+
+    # Legacy property for backward compatibility
+    @property
+    def winners(self) -> List[SupplierInfo]:
+        """Legacy alias for suppliers."""
+        return self.suppliers
+
+    @winners.setter
+    def winners(self, value: List[SupplierInfo]) -> None:
+        """Legacy setter for winners."""
+        self.suppliers = value
 
     # Additional participants
     other_participants: List[OtherParticipant] = Field(
@@ -80,26 +108,31 @@ class WinnerExtractionResultV2(BaseModel):
 
     @model_validator(mode="after")
     def validate_consistency(self) -> "WinnerExtractionResultV2":
-        """Validate consistency between winner_found and winners list."""
-        if self.winner_found and not self.winners:
-            # If winner_found is True but no winners, set to False
+        """Validate consistency between winner_found and suppliers list."""
+        if self.winner_found and not self.suppliers:
+            # If winner_found is True but no suppliers, set to False
             self.winner_found = False
 
-        if not self.winner_found and self.winners:
-            # If winners exist but winner_found is False, set to True
+        if not self.winner_found and self.suppliers:
+            # If suppliers exist but winner_found is False, set to True
             self.winner_found = True
 
         # Check for service file
         if self.flags.is_service_file:
             self.winner_found = False
-            self.winners = []
+            self.suppliers = []
 
         return self
 
-    def get_primary_winner(self) -> Optional[WinnerInfo]:
-        """Get the primary (first) winner if exists."""
-        return self.winners[0] if self.winners else None
+    def get_primary_supplier(self) -> Optional[SupplierInfo]:
+        """Get the primary (first) supplier if exists."""
+        return self.suppliers[0] if self.suppliers else None
+
+    # Legacy alias
+    def get_primary_winner(self) -> Optional[SupplierInfo]:
+        """Legacy alias for get_primary_supplier."""
+        return self.get_primary_supplier()
 
     def get_total_participants_count(self) -> int:
-        """Get total number of participants including winners."""
-        return len(self.winners) + len(self.other_participants)
+        """Get total number of participants including suppliers."""
+        return len(self.suppliers) + len(self.other_participants)

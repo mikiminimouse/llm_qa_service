@@ -10,6 +10,9 @@ pydantic-settings>=2.1.0
 motor>=3.3.0
 pymongo>=4.6.0
 
+# PostgreSQL (для миграции с MongoDB)
+asyncpg>=0.29.0
+
 # HTTP client
 httpx>=0.26.0
 

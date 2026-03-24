@@ -22,6 +22,16 @@ class Settings(BaseSettings):
     MONGO_PROTOCOLS_COLLECTION: str = "docling_results"
     MONGO_QA_COLLECTION: str = "qa_results"
 
+    # PostgreSQL - для миграции с MongoDB
+    LOCAL_PG_SERVER: str = "localhost"
+    LOCAL_PG_PORT: int = 5433
+    LOCAL_PG_USER: str = "delivery_user"
+    LOCAL_PG_PASSWORD: str = ""
+    LOCAL_PG_DB: str = "delivery_processing"
+
+    # Source selection (для миграции)
+    USE_POSTGRESQL_SOURCE: bool = False  # True для чтения из PostgreSQL вместо MongoDB
+
     # GLM-4.7 via Z.ai proxy (OpenAI-compatible)
     GLM_API_KEY: str = ""
     GLM_BASE_URL: str = "https://api.z.ai/api/coding/paas/v4"

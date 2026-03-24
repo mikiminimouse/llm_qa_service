@@ -11,6 +11,7 @@
 """
 
 import asyncio
+import argparse
 import logging
 import sys
 import time
@@ -34,8 +35,26 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
-async def get_unprocessed_unit_ids():
-    """Получить список unit_ids, которые есть в docling_results но нет в qa_results."""
+def parse_args():
+    """Разбор аргументов командной строки."""
+    parser = argparse.ArgumentParser(
+        description="LLM QA Enricher - обработка документов через GLM-4.7"
+    )
+    parser.add_argument(
+        "--limit", "-l",
+        type=int,
+        default=None,
+        help="Лимит документов для обработки (для тестирования)",
+    )
+    return parser.parse_args()
+
+
+async def get_unprocessed_unit_ids(limit: int = None):
+    """Получить список unit_ids, которые есть в docling_results но нет в qa_results.
+
+    Args:
+        limit: Лимит количества документов для обработки
+    """
     settings = get_settings()
     client = AsyncIOMotorClient(settings.MONGO_URI)
     db = client[settings.MONGO_DATABASE]
@@ -50,16 +69,24 @@ async def get_unprocessed_unit_ids():
     unprocessed = list(set(docling_ids) - set(qa_ids))
     unprocessed.sort()
 
+    # Применяем лимит
+    if limit and limit < len(unprocessed):
+        unprocessed = unprocessed[:limit]
+
     logger.info(f"Всего в docling_results: {len(docling_ids)}")
     logger.info(f"Обработано (qa_results): {len(qa_ids)}")
-    logger.info(f"Необработано: {len(unprocessed)}")
+    logger.info(f"Необработано: {len(unprocessed)}" + (f" (ограничено лимитом: {limit})" if limit else ""))
 
     client.close()
     return unprocessed
 
 
-async def process_with_glm47():
-    """Обработать все необработанные документы."""
+async def process_with_glm47(limit: int = None):
+    """Обработать все необработанные документы.
+
+    Args:
+        limit: Лимит документов для обработки
+    """
     start_time = time.time()
 
     logger.info("=" * 70)
@@ -119,7 +146,7 @@ async def process_with_glm47():
         return
 
     # Получить необработанные документы
-    unprocessed_ids = await get_unprocessed_unit_ids()
+    unprocessed_ids = await get_unprocessed_unit_ids(limit=limit)
 
     if not unprocessed_ids:
         logger.info("\n✅ Все документы уже обработаны!")
@@ -185,5 +212,12 @@ async def process_with_glm47():
     await llm_client.close()
 
 
+async def main():
+    """Точка входа для CLI."""
+    args = parse_args()
+
+    await process_with_glm47(limit=args.limit)
+
+
 if __name__ == "__main__":
-    asyncio.run(process_with_glm47())
+    asyncio.run(main())
