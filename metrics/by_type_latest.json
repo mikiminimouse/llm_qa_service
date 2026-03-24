@@ -1,0 +1,29 @@
+{
+  "docx": {
+    "count": 14,
+    "success": 11,
+    "failed": 3,
+    "winner_found": 7,
+    "winner_rate": 63.6,
+    "avg_time_ms": 53791.2,
+    "median_time_ms": 40536.5
+  },
+  "unknown": {
+    "count": 15,
+    "success": 14,
+    "failed": 1,
+    "winner_found": 6,
+    "winner_rate": 42.9,
+    "avg_time_ms": 38386.6,
+    "median_time_ms": 28926
+  },
+  "html": {
+    "count": 1,
+    "success": 1,
+    "failed": 0,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 22902,
+    "median_time_ms": 22902
+  }
+}

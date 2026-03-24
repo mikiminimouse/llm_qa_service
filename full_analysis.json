@@ -1,0 +1,18 @@
+{
+  "timestamp": "2026-01-28T11:29:32.978463",
+  "total_records": 1057,
+  "winner_found": 771,
+  "no_winner": 286,
+  "winner_rate": 72.94,
+  "with_errors": 0,
+  "by_winner_found": [
+    {
+      "_id": true,
+      "count": 771
+    },
+    {
+      "_id": false,
+      "count": 286
+    }
+  ]
+}

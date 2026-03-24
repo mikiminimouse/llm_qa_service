@@ -1,0 +1,47 @@
+{
+  "empty": {
+    "count": 498,
+    "success": 0,
+    "failed": 498,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 0,
+    "median_time_ms": 0
+  },
+  "medium": {
+    "count": 398,
+    "success": 0,
+    "failed": 398,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 0,
+    "median_time_ms": 0
+  },
+  "small": {
+    "count": 52,
+    "success": 0,
+    "failed": 52,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 0,
+    "median_time_ms": 0
+  },
+  "xlarge": {
+    "count": 69,
+    "success": 0,
+    "failed": 69,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 0,
+    "median_time_ms": 0
+  },
+  "large": {
+    "count": 206,
+    "success": 0,
+    "failed": 206,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 0,
+    "median_time_ms": 0
+  }
+}

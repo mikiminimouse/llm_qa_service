@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-01-28T03:20:13.659043",
+  "duration_seconds": 437.97,
+  "total_documents": 30,
+  "success": 30,
+  "failed": 0,
+  "skipped": 0,
+  "success_rate": 100.0,
+  "avg_time_ms": 67464.4,
+  "median_time_ms": 63009.0,
+  "throughput_per_sec": 0.068,
+  "winner_found": 22,
+  "winner_rate": 73.3,
+  "inn_found": 0,
+  "inn_rate": 0.0
+}

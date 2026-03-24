@@ -1,0 +1,12 @@
+{
+  "total_errors": 4,
+  "by_type": {
+    "unknown": 4
+  },
+  "most_common": [
+    {
+      "error": "Processing error: Failed after 2 attempts: ",
+      "count": 4
+    }
+  ]
+}

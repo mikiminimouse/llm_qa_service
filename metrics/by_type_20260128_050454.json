@@ -1,0 +1,47 @@
+{
+  "unknown": {
+    "count": 480,
+    "success": 0,
+    "failed": 480,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 0,
+    "median_time_ms": 0
+  },
+  "html": {
+    "count": 88,
+    "success": 0,
+    "failed": 88,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 0,
+    "median_time_ms": 0
+  },
+  "docx": {
+    "count": 639,
+    "success": 0,
+    "failed": 639,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 0,
+    "median_time_ms": 0
+  },
+  "xml": {
+    "count": 4,
+    "success": 0,
+    "failed": 4,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 0,
+    "median_time_ms": 0
+  },
+  "xlsx": {
+    "count": 12,
+    "success": 0,
+    "failed": 12,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 0,
+    "median_time_ms": 0
+  }
+}

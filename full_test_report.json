@@ -1,0 +1,24 @@
+{
+  "timestamp": "2026-01-28T05:25:00.270124",
+  "duration_seconds": 982.32,
+  "total_documents": 30,
+  "success": 26,
+  "failed": 4,
+  "skipped": 0,
+  "success_rate": 86.7,
+  "avg_time_ms": 45059.3,
+  "median_time_ms": 32029.5,
+  "throughput_per_sec": 0.031,
+  "winner_found": 13,
+  "winner_rate": 50.0,
+  "inn_found": 0,
+  "inn_rate": 0.0,
+  "settings": {
+    "max_concurrent": 3,
+    "sample_size": 30,
+    "skip_processed": false,
+    "glm_timeout": 45.0,
+    "glm_max_retries": 2,
+    "glm_retry_delay": 0.5
+  }
+}

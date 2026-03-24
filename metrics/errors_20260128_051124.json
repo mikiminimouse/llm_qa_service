@@ -1,0 +1,16 @@
+{
+  "total_errors": 14,
+  "by_type": {
+    "unknown": 14
+  },
+  "most_common": [
+    {
+      "error": "Processing error: Failed after 2 attempts: None",
+      "count": 12
+    },
+    {
+      "error": "Processing error: Failed after 2 attempts: ",
+      "count": 2
+    }
+  ]
+}

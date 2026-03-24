@@ -1,0 +1,44 @@
+{
+  "timestamp": "2026-01-28T02:08:39.541789",
+  "baseline": {
+    "test_name": "Baseline (старые настройки)",
+    "max_concurrent": 4,
+    "total_docs": 21,
+    "success": 0,
+    "failed": 21,
+    "skipped": 0,
+    "duration_sec": 0.4,
+    "avg_time_ms": 0,
+    "median_time_ms": 0,
+    "min_time_ms": 0,
+    "max_time_ms": 0,
+    "throughput": 51.97,
+    "http_429_count": 0,
+    "http_timeout_count": 0,
+    "winner_found": 0,
+    "winner_rate": 0.0
+  },
+  "optimized": {
+    "test_name": "Optimized (новые настройки)",
+    "max_concurrent": 10,
+    "total_docs": 20,
+    "success": 0,
+    "failed": 20,
+    "skipped": 0,
+    "duration_sec": 0.29,
+    "avg_time_ms": 0,
+    "median_time_ms": 0,
+    "min_time_ms": 0,
+    "max_time_ms": 0,
+    "throughput": 69.64,
+    "http_429_count": 0,
+    "http_timeout_count": 0,
+    "winner_found": 0,
+    "winner_rate": 0.0
+  },
+  "settings": {
+    "GLM_TIMEOUT": 120.0,
+    "GLM_MAX_RETRIES": 5,
+    "GLM_RETRY_DELAY": 2.0
+  }
+}

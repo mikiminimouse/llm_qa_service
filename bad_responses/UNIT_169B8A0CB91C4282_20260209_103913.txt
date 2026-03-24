@@ -1,0 +1,100 @@
+Unit ID: UNIT_169B8A0CB91C4282
+Timestamp: 20260209_103913
+Error: name 'winners' is not defined
+Content Length: 1542
+======================================================================
+
+LLM RESPONSE:
+{
+    "winner_found": false,
+    "winners": [],
+    "customer_info": {
+        "name": "Росздравнадзор (Федеральная служба по надзору в сфере здравоохранения)",
+        "inn": null
+    },
+    "procurement_info": {
+        "number": null,
+        "name": "Регистрационное удостоверение на медицинское изделие",
+        "status": "not_held",
+        "not_held_reason": null
+    },
+    "flags": {
+        "is_service_file": true,
+        "data_anonymized": false,
+        "multiple_lots": false,
+        "customer_confused_with_winner": false
+    },
+    "reasoning": "Документ является 'Регистрационным удостоверением на медицинское изделие', выданным Федеральной службой по надзору в сфере здравоохранения (Росздравнадзор). В нем содержится информация о производителе (Andocor N.V., Бельгия) и наименовании продукции (Катетер артериальный), но отсутствуют данные о процедуре закупки, заказчике в рамках 44-ФЗ/223-ФЗ или победителе торгов. Это технический/регуляторный документ, а не протокол рассмотрения заявок."
+}
+
+======================================================================
+
+DOCUMENT PREVIEW (first 2000 chars):
+<!-- image -->
+
+DEAEPAAbHAHCAVKBAIOHAA3OPYBCDEPE3APABOOXPAHEHVY (POC3APABHAA3OP)
+
+## PETVCTPALHOHHOE YAOCTOBEPEHHE HA MEAHUHHCROEH3AEJIHE
+
+0T 21 ceHTa6ps 2017 rona Ne P3H 2017/6284
+
+HaMeJuuHHckoeH3Jenne
+
+HacTOee peruCTpaIHOHHoe yHocTOBepeHHe BbIaHO
+
+Andocor N.V., Kwikaard 104, 2980 Zoersel, Belgium
+
+"AHnorop H.B.", BeJbrHn,
+
+HpON3BOINTe.b
+
+"AHnorop H.B.", Beybrng, Andocor N.V., Kwikaard 104, 2980 Zoersel, Belgium
+
+Andocor N.V., Kwikaard 104, 2980 Zoersel, Belgium
+
+HoMep perHcTpa1HoHHoro I0che No PI-13248/56146 oT 15.09.2016
+
+Bn1 MeH1HHCKOrO H3JeJ 191600
+
+KIaCC nOTeHHHaJIBHOrO pHCKa IpHMeHeHHA MeJHHHCKOrO H3JeJH 3
+
+Kon O6epoccHicKOrO KJaccHQHKaTopa nponyKuH no BHnaM 3KOHOMHuecKo JeTembHOCTH32.50.13.110
+
+HaCTOIHee perHCTpaIIHOHHOe yJOCTOBepeHHe HMeeT IpHJIOKeHHe Ha 1 JIHCTe
+
+HpHKa30mPoc32paBHan30pa 0T 21 ceHTa6pa 2017 ron4 N8147 JonyueHo K o6paueHuIoHa TeppuTopunPoccnicro Φeepanun.
+
+PyKoBoJuTeJb ΦeepaJIbHoi cJIyKObI
+
+A.Mypamko
+
+<!-- image -->
+
+0034827
+
+(POC3APABHAA3OP)
+
+## NIPNJOREHNE HA MEAHLHHCROE H3AEJIHE
+
+oT 21 ceHTn6pa 2017 ronaNo P3H 2017/6284
+
+Ha MeJHuNHCKoe H3JeJe
+
+B BapHaHTaXHCIIOJIHeHHX:
+
+- C H3OrHyTbIM HaKOHe4HHKOM (pa3Mepb1: 20Fr、22Fr, 24Fr):
+1. KaHIOJH apTepHaIbHaA, apMHpOBaHHay:
+- ° C HpAMbIM HaKOHeHHKOM (pa3Mepbr: 20Fr, 22Fr, 24Fr).
+2. KaHIOJY apTepHaJIbHaa. HeapMHpOBaHHaq:
+- " C H3OrHyTbIM HaKOHe4HHKOM (pa3Mepb1: 20Fr, 22Fr, 24Fr);
+- -C 1pMbIM HaKOHe4HHKOM (pa3Mepb1: 20Fr,22Fr,24Fr,26Fr.30Fr). Z
+
+PyKOBoIuTe DeAepaJbHoi cJIyx6b! noHa3opyBcΦepe3IpaB0oxpaHeHHy
+
+<!-- image -->
+
+JIncT 1
+
+M.A:Mypamro
+
+0040206...

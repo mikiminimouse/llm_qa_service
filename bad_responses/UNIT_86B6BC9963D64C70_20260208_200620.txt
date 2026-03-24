@@ -1,0 +1,39 @@
+Unit ID: UNIT_86B6BC9963D64C70
+Timestamp: 20260208_200620
+Error: name 'winners' is not defined
+Content Length: 46
+======================================================================
+
+LLM RESPONSE:
+```json
+{
+    "winner_found": false,
+    "winners": [],
+    "customer_info": {
+        "name": null,
+        "inn": null
+    },
+    "procurement_info": {
+        "number": null,
+        "name": null,
+        "status": "not_held",
+        "not_held_reason": null
+    },
+    "flags": {
+        "is_service_file": false,
+        "data_anonymized": false,
+        "multiple_lots": false,
+        "customer_confused_with_winner": false
+    },
+    "reasoning": "Документ не содержит данных (изображения отсутствуют или не распознаны). Невозможно идентифицировать заказчика, найти таблицы с результатами или определить победителя."
+}
+```
+
+======================================================================
+
+DOCUMENT PREVIEW (first 2000 chars):
+<!-- image -->
+
+<!-- image -->
+
+<!-- image -->...

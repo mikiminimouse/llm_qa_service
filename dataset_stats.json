@@ -1,0 +1,21 @@
+{
+  "total": 743,
+  "by_type": {
+    "html": 88,
+    "docx": 639,
+    "xml": 4,
+    "xlsx": 12
+  },
+  "content_stats": {
+    "empty": 18,
+    "small": 52,
+    "medium": 398,
+    "large": 206,
+    "xlarge": 69
+  },
+  "avg_text_count": 44.7,
+  "avg_table_count": 0.0,
+  "avg_total_chars": 2426.7,
+  "timestamp": "2026-01-28T03:08:08.795842",
+  "source_path": "/home/pak/Processing data/2026-01-23/OutputDocling"
+}

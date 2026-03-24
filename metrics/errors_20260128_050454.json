@@ -1,0 +1,48 @@
+{
+  "total_errors": 21,
+  "by_type": {
+    "unknown": 21
+  },
+  "most_common": [
+    {
+      "error": "Document not found: UNIT_3d7dbdff46574648",
+      "count": 1
+    },
+    {
+      "error": "Document not found: UNIT_2ca07cb884ac4f55",
+      "count": 1
+    },
+    {
+      "error": "Document not found: UNIT_0ecc7f46916d4479",
+      "count": 1
+    },
+    {
+      "error": "Document not found: UNIT_61d4ea6dc6d44674",
+      "count": 1
+    },
+    {
+      "error": "Document not found: UNIT_9a821c2992644c21",
+      "count": 1
+    },
+    {
+      "error": "Document not found: UNIT_14946e7e5e294243",
+      "count": 1
+    },
+    {
+      "error": "Document not found: UNIT_7a34fad1152d427b",
+      "count": 1
+    },
+    {
+      "error": "Document not found: UNIT_0bd6f324da0d48ad",
+      "count": 1
+    },
+    {
+      "error": "Document not found: UNIT_3a9b842acaec41b7",
+      "count": 1
+    },
+    {
+      "error": "Document not found: UNIT_dafdbbd3a4194ce0",
+      "count": 1
+    }
+  ]
+}

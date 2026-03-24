@@ -1,0 +1,47 @@
+{
+  "medium": {
+    "count": 7,
+    "success": 5,
+    "failed": 2,
+    "winner_found": 3,
+    "winner_rate": 60.0,
+    "avg_time_ms": 38506.7,
+    "median_time_ms": 37968
+  },
+  "empty": {
+    "count": 13,
+    "success": 9,
+    "failed": 4,
+    "winner_found": 7,
+    "winner_rate": 77.8,
+    "avg_time_ms": 29852.3,
+    "median_time_ms": 37210
+  },
+  "large": {
+    "count": 7,
+    "success": 1,
+    "failed": 6,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 27445,
+    "median_time_ms": 3644
+  },
+  "xlarge": {
+    "count": 2,
+    "success": 0,
+    "failed": 2,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 3327.5,
+    "median_time_ms": 3327.5
+  },
+  "small": {
+    "count": 1,
+    "success": 1,
+    "failed": 0,
+    "winner_found": 0,
+    "winner_rate": 0.0,
+    "avg_time_ms": 14083,
+    "median_time_ms": 14083
+  }
+}
